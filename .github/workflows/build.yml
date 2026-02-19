@@ -1,23 +1,53 @@
-name: Build APK
+name: Flutter Build APK
+
+# Se dispara al hacer push a la rama principal
 on:
   push:
     branches:
       - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
 jobs:
   build:
+    name: Build APK
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      # 1. Checkout del repositorio
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Configurar Java (Necesario para Android/Flutter)
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
+          distribution: 'zulu' # O 'temurin'
           java-version: '17'
-          distribution: 'temurin'
-      - uses: subosito/flutter-action@v2
+
+      # 3. Configurar Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
-      - run: flutter pub get
-      - run: flutter build apk --release
-      - uses: actions/upload-artifact@v3
+          flutter-version: '3.x' # O una versión específica como '3.19.0'
+          channel: 'stable'
+          cache: true
+
+      # 4. Instalar dependencias
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. Compilar el APK (Release)
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 6. Subir el artefacto (El APK generado)
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 5 # Opcional: para no llenar el storage de GitHub
